@@ -43,6 +43,22 @@ export function cyberVisualDefaultsForHudTransition(
 }
 
 /**
+ * Whether an explicit layout transition leaves Cyber, so the map style Cyber
+ * selected on entry hands back to the one the operator had before it.
+ */
+export function leavesCyberExplicitly(
+  previousLayout,
+  nextLayout,
+  { explicit = false } = {},
+) {
+  return (
+    explicit &&
+    normalizeHudLayout(previousLayout) === 'cyber' &&
+    normalizeHudLayout(nextLayout) !== 'cyber'
+  );
+}
+
+/**
  * Keep the global shell skin derived from the selected HUD layout. The data
  * attribute lives on <html> so theme tokens are available to every UI surface.
  * @param {HTMLElement|{dataset?: Record<string, string>}|null|undefined} root

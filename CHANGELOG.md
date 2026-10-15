@@ -1,5 +1,10 @@
 # Changelog
 
+- Leaving the Cyber HUD layout no longer leaves the map stuck in FLIR. Entering
+  Cyber switches the map to thermal with Ironbow; choosing Tactical, Operator or
+  Minimal afterwards now returns the style (and thermal palette) that was active
+  before Cyber. A style picked while in Cyber is kept.
+
 - CCTV cameras whose bearing is a guess now say so. Packs mark bearings derived
   from a hash of the camera id as `headingConfidence: 'low'`, but nothing read the
   flag, so roughly 70% of a default catalog rendered like surveyed facings. The HUD
