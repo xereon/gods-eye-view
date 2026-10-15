@@ -1,15 +1,15 @@
 package com.example.godseyeview
 
 import android.annotation.SuppressLint
+import android.net.Uri
 import android.os.Bundle
+import android.webkit.CookieManager
 import android.webkit.PermissionRequest
 import android.webkit.WebChromeClient
-import android.webkit.WebResourceRequest
-import android.webkit.WebResourceResponse
-import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.activity.ComponentActivity
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,61 +18,68 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.webkit.WebViewAssetLoader
 import com.example.godseyeview.theme.GodsEyeViewTheme
 
 class MainActivity : ComponentActivity() {
+    private var webView: WebView? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                val view = webView
+                if (view != null && view.canGoBack()) view.goBack() else finish()
+            }
+        })
         setContent {
             GodsEyeViewTheme {
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    GodsEyeWebView("https://appassets.androidplatform.net/assets/www/index.html") 
+                    GodsEyeWebView(startUrl(), onCreated = { webView = it })
                 }
             }
         }
     }
+
+    override fun onDestroy() {
+        webView = null
+        super.onDestroy()
+    }
+}
+
+/**
+ * The hosted server's address. With an access key, the first load passes it as
+ * `?key=`; the server answers with a cookie and drops the key from the URL.
+ */
+private fun startUrl(): String {
+    val base = Uri.parse(BuildConfig.SERVER_URL)
+    if (BuildConfig.ACCESS_KEY.isEmpty()) return base.toString()
+    return base.buildUpon().appendQueryParameter("key", BuildConfig.ACCESS_KEY).build().toString()
 }
 
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
-fun GodsEyeWebView(url: String) {
+fun GodsEyeWebView(url: String, onCreated: (WebView) -> Unit) {
     AndroidView(
         modifier = Modifier.fillMaxSize(),
         factory = { context ->
-            
-            val assetLoader = WebViewAssetLoader.Builder()
-                .addPathHandler("/assets/", WebViewAssetLoader.AssetsPathHandler(context))
-                .build()
-
             WebView(context).apply {
                 settings.javaScriptEnabled = true
                 settings.domStorageEnabled = true
                 settings.mediaPlaybackRequiresUserGesture = false
-                settings.cacheMode = WebSettings.LOAD_NO_CACHE
-                
-                webViewClient = object : WebViewClient() {
-                    override fun shouldInterceptRequest(
-                        view: WebView,
-                        request: WebResourceRequest
-                    ): WebResourceResponse? {
-                        return assetLoader.shouldInterceptRequest(request.url)
-                    }
-                }
-                
+                CookieManager.getInstance().setAcceptCookie(true)
+
+                webViewClient = WebViewClient()
                 webChromeClient = object : WebChromeClient() {
                     override fun onPermissionRequest(request: PermissionRequest) {
                         request.grant(request.resources)
                     }
                 }
-                
-                WebView.setWebContentsDebuggingEnabled(true)
+
+                WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG)
+                onCreated(this)
+                loadUrl(url)
             }
         },
-        update = { webView ->
-            webView.loadUrl(url)
-        }
     )
 }
-

@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
   alias(libs.plugins.android.application)
   alias(libs.plugins.compose.compiler)
@@ -13,6 +15,13 @@ android {
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
+
+        // Where the app loads God's Eye View from, and the hosted server's
+        // GEV_ACCESS_KEY. Set them in local.properties (not committed), as
+        // -Pgev.serverUrl=... / -Pgev.accessKey=..., or as GEV_SERVER_URL /
+        // GEV_ACCESS_KEY environment variables.
+        buildConfigField("String", "SERVER_URL", "\"${gevSetting("gev.serverUrl", "GEV_SERVER_URL", "https://gev.concise.design")}\"")
+        buildConfigField("String", "ACCESS_KEY", "\"${gevSetting("gev.accessKey", "GEV_ACCESS_KEY", "")}\"")
     }
 
     buildTypes {
@@ -28,7 +37,7 @@ android {
     buildFeatures {
       compose = true
       aidl = false
-      buildConfig = false
+      buildConfig = true
       shaders = false
     }
 
@@ -82,17 +91,15 @@ dependencies {
     implementation(libs.androidx.navigation3.runtime)
     implementation(libs.androidx.lifecycle.viewmodel.navigation3)
     
-    // Webkit for WebViewAssetLoader
-    implementation("androidx.webkit:webkit:1.11.0")
 }
 
-// Copy Vite's production build output into Android's assets folder
-tasks.register<Copy>("copyViteAssets") {
-    val viteRoot = project.projectDir.parentFile.parentFile
-    from(File(viteRoot, "dist"))
-    into("src/main/assets/www")
-}
-
-tasks.named("preBuild") {
-    dependsOn("copyViteAssets")
+fun gevSetting(property: String, env: String, fallback: String): String {
+    val local = Properties().apply {
+        val file = rootProject.file("local.properties")
+        if (file.exists()) file.inputStream().use { load(it) }
+    }
+    return (providers.gradleProperty(property).orNull
+        ?: local.getProperty(property)
+        ?: System.getenv(env)
+        ?: fallback).trim().replace("\\", "\\\\").replace("\"", "\\\"")
 }
