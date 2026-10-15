@@ -1,12 +1,15 @@
 export function initTvNavigation() {
   window.addEventListener('keydown', (e) => {
     // Check if the key is an arrow key
-    if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) return;
+    if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key))
+      return;
 
     // Get all focusable elements
-    const focusableSelector = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
-    const focusableElements = Array.from(document.querySelectorAll(focusableSelector))
-        .filter(el => !el.disabled && el.offsetWidth > 0 && el.offsetHeight > 0);
+    const focusableSelector =
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+    const focusableElements = Array.from(
+      document.querySelectorAll(focusableSelector),
+    ).filter((el) => !el.disabled && el.offsetWidth > 0 && el.offsetHeight > 0);
 
     if (focusableElements.length === 0) return;
 
@@ -25,7 +28,7 @@ export function initTvNavigation() {
     let bestMatch = null;
     let minDistance = Infinity;
 
-    focusableElements.forEach(el => {
+    focusableElements.forEach((el) => {
       if (el === active) return;
 
       const rect = el.getBoundingClientRect();
@@ -35,16 +38,28 @@ export function initTvNavigation() {
       // Calculate distance based on direction
       if (e.key === 'ArrowUp' && rect.bottom <= activeRect.top) {
         isCandidate = true;
-        distance = Math.hypot(rect.x - activeRect.x, rect.bottom - activeRect.top);
+        distance = Math.hypot(
+          rect.x - activeRect.x,
+          rect.bottom - activeRect.top,
+        );
       } else if (e.key === 'ArrowDown' && rect.top >= activeRect.bottom) {
         isCandidate = true;
-        distance = Math.hypot(rect.x - activeRect.x, rect.top - activeRect.bottom);
+        distance = Math.hypot(
+          rect.x - activeRect.x,
+          rect.top - activeRect.bottom,
+        );
       } else if (e.key === 'ArrowLeft' && rect.right <= activeRect.left) {
         isCandidate = true;
-        distance = Math.hypot(rect.right - activeRect.left, rect.y - activeRect.y);
+        distance = Math.hypot(
+          rect.right - activeRect.left,
+          rect.y - activeRect.y,
+        );
       } else if (e.key === 'ArrowRight' && rect.left >= activeRect.right) {
         isCandidate = true;
-        distance = Math.hypot(rect.left - activeRect.right, rect.y - activeRect.y);
+        distance = Math.hypot(
+          rect.left - activeRect.right,
+          rect.y - activeRect.y,
+        );
       }
 
       if (isCandidate && distance < minDistance) {
