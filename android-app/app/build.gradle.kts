@@ -8,7 +8,7 @@ android {
     namespace = "com.example.godseyeview"
     compileSdk = 36
     defaultConfig {
-        applicationId = "com.example.godseyeview"
+        applicationId = "io.github.xereon.godseyeview"
         minSdk = 24
         targetSdk = 36
         versionCode = 1
