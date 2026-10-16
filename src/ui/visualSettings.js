@@ -38,7 +38,11 @@ import {
   readCyberSonarSettings,
   setCyberSonarEnabled,
 } from '../cyberSonar.js';
-import { cyberVisualDefaultsForHudTransition } from '../hudLayouts.js';
+import {
+  CYBER_VISUAL_DEFAULTS,
+  cyberVisualDefaultsForHudTransition,
+  leavesCyberExplicitly,
+} from '../hudLayouts.js';
 const DETECTION_ALLOCATION_STORAGE_KEY = 'gev:detection-allocation:v1';
 
 /** Own visual preferences, detection overrides and display-control state. */
@@ -200,6 +204,7 @@ export class VisualSettings {
     this._detectionUserOverridden = false;
     this._cockpitVisionMode = 'optical';
     this._cockpitVisionRestore = null;
+    this._cyberVisualRestore = null;
     this._contactsDetectionRestore = null;
     this._detectionAllocationBtns = [
       document.getElementById('detection-allocation-elastic'),
@@ -623,12 +628,23 @@ export class VisualSettings {
       { explicit: applyVisualDefaults },
     );
     if (visualDefaults) this._applyCyberVisualDefaults(visualDefaults);
+    else if (
+      leavesCyberExplicitly(previousVariant, nextVariant, {
+        explicit: applyVisualDefaults,
+      })
+    )
+      this._restoreCyberVisualDefaults();
+    else if (nextVariant !== 'cyber') this._cyberVisualRestore = null;
     this._syncCyberSonarControl();
     this._syncShareState();
     this._scheduleAdaptivePanelLayout({ settle: true });
   }
 
   _applyCyberVisualDefaults({ style, ironbow }) {
+    this._cyberVisualRestore = {
+      style: this.activeStyle,
+      palette: this.stages?.thermal?.uniforms?.palette,
+    };
     this.setStyle(style, {
       applyPreset: false,
       revealParameters: false,
@@ -638,6 +654,24 @@ export class VisualSettings {
     thermalUniforms.palette = ironbow;
     this._updateSliderPanel('thermal', { reveal: false });
     this.services.governorRequestRender('cyber-visual-defaults');
+  }
+
+  /**
+   * Leaving Cyber hands FLIR back to the style chosen before entering it. A
+   * style the operator picked while in Cyber is theirs and stays.
+   */
+  _restoreCyberVisualDefaults() {
+    const restore = this._cyberVisualRestore;
+    this._cyberVisualRestore = null;
+    if (!restore || this.activeStyle !== CYBER_VISUAL_DEFAULTS.style) return;
+    const thermalUniforms = this.stages?.thermal?.uniforms;
+    if (thermalUniforms && restore.palette !== undefined)
+      thermalUniforms.palette = restore.palette;
+    this.setStyle(restore.style || 'normal', {
+      applyPreset: false,
+      revealParameters: false,
+    });
+    this.services.governorRequestRender('cyber-visual-restore');
   }
 
   _syncCyberSonarControl() {

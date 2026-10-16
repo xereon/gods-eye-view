@@ -130,6 +130,10 @@ export function createApplicationViewer({ container, creditContainer }) {
     // render loop. See app/atmosphereCompat.js.
     applyModelAtmosphereWorkaround(viewer.scene);
     viewer.scene.globe.show = false;
+    // Wherever no imagery tile is drawn (loading, or the cracks the keyless
+    // terrain mesh opens near the Antarctic at globe zoom) Cesium shows the
+    // globe's base colour, pure blue by default. Use a deep-ocean tone instead.
+    viewer.scene.globe.baseColor = Cesium.Color.fromCssColorString('#0e3550');
     viewer.scene.skyAtmosphere.show = true;
     viewer.scene.skyAtmosphere.atmosphereLightIntensity = 18;
     viewer.scene.skyAtmosphere.saturationShift = -0.12;

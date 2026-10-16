@@ -302,6 +302,39 @@ test('an explicit transition into Cyber selects FLIR with Ironbow 0.42 once', ()
   );
 });
 
+test('leaving Cyber hands FLIR back to the style chosen before entering it', (t) => {
+  const { owner, hud } = styleOwner(t, 'tactical');
+  owner.setStyle('surveillance');
+  const palette = owner.stages.thermal.uniforms.palette;
+
+  owner._setHudVariant('cyber', { applyVisualDefaults: true });
+  assert.equal(owner.activeStyle, 'thermal');
+  assert.equal(owner.stages.thermal.uniforms.palette, 0.42);
+
+  owner._setHudVariant('operator', { applyVisualDefaults: true });
+  assert.equal(hud.getVariant(), 'operator');
+  assert.equal(owner.activeStyle, 'surveillance');
+  assert.equal(owner.stages.thermal.uniforms.palette, palette);
+});
+
+test('a style picked inside Cyber survives leaving it', (t) => {
+  const { owner } = styleOwner(t, 'tactical');
+  owner._setHudVariant('cyber', { applyVisualDefaults: true });
+  owner.setStyle('noir');
+  owner._setHudVariant('tactical', { applyVisualDefaults: true });
+  assert.equal(owner.activeStyle, 'noir');
+});
+
+test('restoring a non-Cyber layout from a link keeps the restored style', (t) => {
+  const { owner } = styleOwner(t, 'tactical');
+  owner._setHudVariant('cyber', { applyVisualDefaults: true });
+  owner._setHudVariant('minimal');
+  assert.equal(owner.activeStyle, 'thermal');
+  owner._setHudVariant('cyber');
+  owner._setHudVariant('tactical', { applyVisualDefaults: true });
+  assert.equal(owner.activeStyle, 'thermal');
+});
+
 test('Cyber visual defaults update the style, thermal palette and render state', () => {
   const calls = [];
   const owner = {
