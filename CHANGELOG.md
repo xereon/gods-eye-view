@@ -1,5 +1,12 @@
 # Changelog
 
+- Move and zoom the map with a TV remote. With no control focused, the D-pad
+  pans the globe; OK switches to zoom mode (Up/Down zoom, Left/Right rotate) and
+  back; holding OK moves focus to the on-screen controls. In the Android app,
+  Back returns from the controls to the globe and leaves zoom mode before it
+  closes the app. `+`/`-`, Page Up/Down, Channel Up/Down and fast-forward/rewind
+  also zoom.
+
 - Leaving the Cyber HUD layout no longer leaves the map stuck in FLIR. Entering
   Cyber switches the map to thermal with Ironbow; choosing Tactical, Operator or
   Minimal afterwards now returns the style (and thermal palette) that was active

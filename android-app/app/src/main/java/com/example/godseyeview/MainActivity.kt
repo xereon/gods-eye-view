@@ -37,8 +37,13 @@ class MainActivity : ComponentActivity() {
         )
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                val view = webView
-                if (view != null && view.canGoBack()) view.goBack() else finish()
+                val view = webView ?: return finish()
+                // The page uses Back first: to leave zoom mode, or to return
+                // from the on-screen controls to the globe.
+                view.evaluateJavascript("window.gevHandleBack?.() === true") { used ->
+                    if (used == "true") return@evaluateJavascript
+                    if (view.canGoBack()) view.goBack() else finish()
+                }
             }
         })
         setContent {

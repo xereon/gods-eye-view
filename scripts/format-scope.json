@@ -165,6 +165,8 @@
   "src/ui/displayControls.test.mjs",
   "src/ui/cameraOrientationControls.js",
   "src/ui/cameraOrientationControls.test.mjs",
+  "src/ui/remoteCameraKeys.js",
+  "src/ui/remoteCameraKeys.test.mjs",
   "src/ui/effects.js",
   "src/ui/visualEffects.js",
   "src/ui/visualPresets.js",
