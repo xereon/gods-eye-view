@@ -27,7 +27,11 @@ workflow; without them the globe runs on its keyless sources.
    - Node.js version: 24
    - Application mode: **Development** (so `npm install` also installs Vite,
      which serves the app)
-   - Application root: e.g. `gods-eye-view`
+   - Application root: e.g. `gev`, a folder in your home directory that is
+     **not** the subdomain's Document Root or inside `public_html`. If the
+     project files sit in the Document Root, the web server hands out the raw
+     source and the page stays black with `Failed to resolve module specifier
+"cesium"`.
    - Application URL: the subdomain
    - Application startup file: `app.cjs`
 3. **File Manager:** upload the bundle zip into the application root and
