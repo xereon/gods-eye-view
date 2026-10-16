@@ -255,6 +255,11 @@
 }
 
 @media (max-width: 520px) {
+  /* Phones pinch to zoom; keep the top row short enough for the title. */
+  #top-center-actions .camera-zoom {
+    display: none;
+  }
+
   /* 16px keeps the Radio broadcast waves (15px above the logo) on-screen. */
   #title-bar {
     top: 16px;

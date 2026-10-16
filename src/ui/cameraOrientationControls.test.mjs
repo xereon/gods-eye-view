@@ -3,6 +3,8 @@ import test from 'node:test';
 import * as Cesium from 'cesium';
 import {
   OBLIQUE_PITCH,
+  MAX_ZOOM_RANGE_M,
+  MIN_ZOOM_RANGE_M,
   STRAIGHT_DOWN_PITCH,
   bindCameraOrientationControls,
   createCameraOrientationAnimator,
@@ -10,6 +12,7 @@ import {
   readCameraTargetFrame,
   resetCameraNorth,
   toggleCameraTilt,
+  zoomedRange,
 } from './cameraOrientationControls.js';
 import { NavigationController } from './navigationController.js';
 
@@ -687,4 +690,42 @@ test('rapid tilt presses reverse direction and north-up keeps the requested tilt
   assert.ok(Math.abs(frame.heading) < 1e-6);
   controls.destroy();
   assert.equal(viewer.scene.preUpdate.numberOfListeners, 0);
+});
+
+test('a zoom step halves or doubles the range within the limits', () => {
+  assert.equal(zoomedRange(4000, 'in'), 2000);
+  assert.equal(zoomedRange(4000, 'out'), 8000);
+  assert.equal(zoomedRange(40, 'in'), MIN_ZOOM_RANGE_M);
+  assert.equal(zoomedRange(MAX_ZOOM_RANGE_M, 'out'), MAX_ZOOM_RANGE_M);
+});
+
+test('zoom buttons move a real camera along its view, keeping heading and pitch', () => {
+  const { viewer } = createRealViewer(AUSTIN_GROUND);
+  orbit(viewer, AUSTIN_GROUND, 120, OBLIQUE_PITCH, 4000);
+  const zoomInButton = new FakeButton();
+  const zoomOutButton = new FakeButton();
+  const navigations = [];
+  const controls = bindCameraOrientationControls({
+    viewer,
+    elements: { zoomInButton, zoomOutButton },
+    runNavigation(noun, navigate) {
+      navigations.push(noun);
+      return navigate();
+    },
+  });
+  const range = () => readCameraTargetFrame(viewer).range;
+
+  zoomInButton.click();
+  assert.ok(Math.abs(range() - 2000) < 1, `range ${range()}`);
+  zoomOutButton.click();
+  zoomOutButton.click();
+  assert.ok(Math.abs(range() - 8000) < 1, `range ${range()}`);
+  const frame = readCameraTargetFrame(viewer);
+  assert.ok(Math.abs(Cesium.Math.toDegrees(frame.heading) - 120) < 0.01);
+  assert.ok(Math.abs(frame.pitch - OBLIQUE_PITCH) < 1e-6);
+  assert.deepEqual(navigations, ['camera', 'camera', 'camera']);
+
+  controls.destroy();
+  zoomInButton.click();
+  assert.equal(navigations.length, 3);
 });
