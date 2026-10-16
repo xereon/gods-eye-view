@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
+import android.view.ViewGroup
 import android.webkit.ConsoleMessage
 import android.webkit.CookieManager
 import android.webkit.PermissionRequest
@@ -74,6 +75,13 @@ fun GodsEyeWebView(url: String, modifier: Modifier = Modifier, onCreated: (WebVi
         modifier = modifier.fillMaxSize(),
         factory = { context ->
             WebView(context).apply {
+                // Without explicit MATCH_PARENT the WebView is WRAP_CONTENT,
+                // which makes CSS viewport units (100vh, 100dvh) resolve to 0
+                // and leaves the globe's canvas 0 px tall.
+                layoutParams = ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                )
                 settings.javaScriptEnabled = true
                 settings.domStorageEnabled = true
                 settings.mediaPlaybackRequiresUserGesture = false
