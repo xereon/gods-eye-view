@@ -1,5 +1,11 @@
 # Changelog
 
+- The globe can now zoom from a TV remote. Zoom out and zoom in buttons sit in
+  the top-centre actions where D-pad focus reaches them, and `+` / `-` (plus a
+  remote's channel or fast-forward / rewind keys) zoom too. Each step halves or
+  doubles the distance to the view centre and keeps the heading and tilt.
+  Phones narrower than 520 px keep pinch-to-zoom and hide the buttons.
+
 - Leaving the Cyber HUD layout no longer leaves the map stuck in FLIR. Entering
   Cyber switches the map to thermal with Ironbow; choosing Tactical, Operator or
   Minimal afterwards now returns the style (and thermal palette) that was active
