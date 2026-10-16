@@ -14,6 +14,37 @@ function trackedTarget(viewer) {
 export const OBLIQUE_PITCH = Cesium.Math.toRadians(-35);
 export const STRAIGHT_DOWN_PITCH = Cesium.Math.toRadians(-89);
 const OBLIQUE_THRESHOLD = Cesium.Math.toRadians(-60);
+/** Each zoom press halves or doubles the distance to the viewport center. */
+export const ZOOM_STEP = 2;
+export const MIN_ZOOM_RANGE_M = 30;
+export const MAX_ZOOM_RANGE_M = 40_000_000;
+
+/** The orbit range one zoom step in `direction` ('in' or 'out') leads to. */
+export function zoomedRange(range, direction) {
+  const next = direction === 'in' ? range / ZOOM_STEP : range * ZOOM_STEP;
+  return Cesium.Math.clamp(next, MIN_ZOOM_RANGE_M, MAX_ZOOM_RANGE_M);
+}
+
+/** Remote and keyboard keys that zoom: D-pad remotes have no wheel or pinch. */
+const ZOOM_KEYS = Object.freeze({
+  '+': 'in',
+  '=': 'in',
+  ChannelUp: 'in',
+  MediaFastForward: 'in',
+  ZoomIn: 'in',
+  '-': 'out',
+  _: 'out',
+  ChannelDown: 'out',
+  MediaRewind: 'out',
+  ZoomOut: 'out',
+});
+
+function isEditableTarget(target) {
+  return Boolean(
+    target?.isContentEditable ||
+    target?.matches?.('input, select, textarea, [contenteditable]'),
+  );
+}
 
 function normalizedHeading(heading) {
   const wrapped = Cesium.Math.zeroToTwoPi(
@@ -197,7 +228,11 @@ export function createCameraOrientationAnimator(
   function animate(frame, destination) {
     cancel();
     if (!viewer.scene?.preUpdate?.addEventListener || duration <= 0)
-      return setCameraTargetFrame(viewer, { ...frame, ...destination });
+      return setCameraTargetFrame(viewer, {
+        ...frame,
+        ...destination,
+        range: destination.range ?? frame.range,
+      });
     const entity = viewer.trackedEntity;
     pending = destination;
     const start = now();
@@ -219,6 +254,10 @@ export function createCameraOrientationAnimator(
           target,
           heading: frame.heading + headingDelta * eased,
           pitch: Cesium.Math.lerp(frame.pitch, destination.pitch, eased),
+          // Geometric, so each step of a zoom feels the same at any altitude.
+          range:
+            frame.range *
+            Math.pow((destination.range ?? frame.range) / frame.range, eased),
         })
       ) {
         cancel();
@@ -238,15 +277,18 @@ export function createCameraOrientationAnimator(
   };
 }
 
-/** Bind the two map-orientation actions and keep their accessible state current. */
+/** Bind the map-orientation and zoom actions and keep their accessible state current. */
 export function bindCameraOrientationControls({
   viewer,
   elements,
   runNavigation,
   showToast,
+  documentRef = null,
 }) {
   const tiltButton = elements?.tiltButton;
   const northButton = elements?.northButton;
+  const zoomInButton = elements?.zoomInButton;
+  const zoomOutButton = elements?.zoomOutButton;
   const removers = [];
   let destroyed = false;
   let applied = null;
@@ -318,6 +360,7 @@ export function bindCameraOrientationControls({
       return animator.animate(frame, {
         heading: pending?.heading ?? frame.heading,
         pitch,
+        range: pending?.range,
       })
         ? { tilted: nextTilted, pitch }
         : false;
@@ -339,12 +382,48 @@ export function bindCameraOrientationControls({
         animator.animate(frame, {
           heading: 0,
           pitch: pending?.pitch ?? frame.pitch,
+          range: pending?.range,
         })
       );
     });
     if (result) showToast?.('North up');
     sync();
   });
+
+  /** Step the orbit range toward or away from the viewport center. */
+  const zoom = (direction) => {
+    const pending = animator.destination;
+    return runNavigation('camera', () => {
+      const frame = readCameraTargetFrame(viewer);
+      if (!frame) return false;
+      const range = zoomedRange(pending?.range ?? frame.range, direction);
+      return animator.animate(frame, {
+        heading: pending?.heading ?? frame.heading,
+        pitch: pending?.pitch ?? frame.pitch,
+        range,
+      });
+    });
+  };
+  listen(zoomInButton, () => zoom('in'));
+  listen(zoomOutButton, () => zoom('out'));
+  if (documentRef?.addEventListener) {
+    const onKeyDown = (event) => {
+      const direction = ZOOM_KEYS[event.key];
+      if (
+        !direction ||
+        event.defaultPrevented ||
+        event.ctrlKey ||
+        event.metaKey ||
+        event.altKey ||
+        isEditableTarget(event.target)
+      )
+        return;
+      event.preventDefault();
+      zoom(direction);
+    };
+    documentRef.addEventListener('keydown', onKeyDown);
+    removers.push(() => documentRef.removeEventListener('keydown', onKeyDown));
+  }
 
   const subscribe = (event, handler) => {
     const remove = event?.addEventListener?.(handler);

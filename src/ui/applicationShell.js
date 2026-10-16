@@ -1408,7 +1408,7 @@ export class StyleManager extends ShellFacade {
     );
   }
 
-  /** Wire Google Maps-style tilt and north-up camera actions. */
+  /** Wire Google Maps-style tilt, north-up and zoom camera actions. */
   _initCameraOrientationControls() {
     this._cameraOrientationControls?.destroy();
     this._cameraOrientationControls = bindCameraOrientationControls({
@@ -1416,7 +1416,10 @@ export class StyleManager extends ShellFacade {
       elements: {
         tiltButton: this._tiltMapBtn,
         northButton: this._northUpBtn,
+        zoomInButton: this._zoomInBtn,
+        zoomOutButton: this._zoomOutBtn,
       },
+      documentRef: document,
       runNavigation: (noun, navigate) =>
         this._navigation.runOrientation(noun, navigate),
       showToast: (message) => this._showToast(message),

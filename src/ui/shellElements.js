@@ -164,6 +164,8 @@ export function readShellElements(document = globalThis.document) {
     _shareBtn: document.getElementById('share-btn'),
     _tiltMapBtn: document.getElementById('tilt-map-view'),
     _northUpBtn: document.getElementById('north-up-view'),
+    _zoomInBtn: document.getElementById('zoom-in-view'),
+    _zoomOutBtn: document.getElementById('zoom-out-view'),
     _clearSelectedLayersBtn: document.getElementById('clear-selected-layers'),
     _globalLoadingStatus: document.getElementById('global-loading-status'),
     _globalLoadingLabel: document.getElementById('global-loading-label'),

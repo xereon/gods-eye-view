@@ -3,6 +3,8 @@ import test from 'node:test';
 import * as Cesium from 'cesium';
 import {
   OBLIQUE_PITCH,
+  MAX_ZOOM_RANGE_M,
+  MIN_ZOOM_RANGE_M,
   STRAIGHT_DOWN_PITCH,
   bindCameraOrientationControls,
   createCameraOrientationAnimator,
@@ -10,6 +12,7 @@ import {
   readCameraTargetFrame,
   resetCameraNorth,
   toggleCameraTilt,
+  zoomedRange,
 } from './cameraOrientationControls.js';
 import { NavigationController } from './navigationController.js';
 
@@ -687,4 +690,63 @@ test('rapid tilt presses reverse direction and north-up keeps the requested tilt
   assert.ok(Math.abs(frame.heading) < 1e-6);
   controls.destroy();
   assert.equal(viewer.scene.preUpdate.numberOfListeners, 0);
+});
+
+test('a zoom step halves or doubles the range within the limits', () => {
+  assert.equal(zoomedRange(4000, 'in'), 2000);
+  assert.equal(zoomedRange(4000, 'out'), 8000);
+  assert.equal(zoomedRange(40, 'in'), MIN_ZOOM_RANGE_M);
+  assert.equal(zoomedRange(MAX_ZOOM_RANGE_M, 'out'), MAX_ZOOM_RANGE_M);
+});
+
+test('zoom buttons and remote keys move a real camera along its view, keeping heading and pitch', () => {
+  const { viewer } = createRealViewer(AUSTIN_GROUND);
+  orbit(viewer, AUSTIN_GROUND, 120, OBLIQUE_PITCH, 4000);
+  const zoomInButton = new FakeButton();
+  const zoomOutButton = new FakeButton();
+  const documentRef = new EventTarget();
+  const navigations = [];
+  const controls = bindCameraOrientationControls({
+    viewer,
+    elements: { zoomInButton, zoomOutButton },
+    runNavigation(noun, navigate) {
+      navigations.push(noun);
+      return navigate();
+    },
+    documentRef,
+  });
+  const range = () => readCameraTargetFrame(viewer).range;
+  const press = (key, init = {}) => {
+    const event = new Event('keydown', { cancelable: true });
+    for (const [name, value] of Object.entries({ key, ...init }))
+      Object.defineProperty(event, name, { value });
+    documentRef.dispatchEvent(event);
+    return event;
+  };
+
+  zoomInButton.click();
+  assert.ok(Math.abs(range() - 2000) < 1, `range ${range()}`);
+  zoomOutButton.click();
+  zoomOutButton.click();
+  assert.ok(Math.abs(range() - 8000) < 1, `range ${range()}`);
+  const frame = readCameraTargetFrame(viewer);
+  assert.ok(Math.abs(Cesium.Math.toDegrees(frame.heading) - 120) < 0.01);
+  assert.ok(Math.abs(frame.pitch - OBLIQUE_PITCH) < 1e-6);
+
+  assert.equal(press('MediaFastForward').defaultPrevented, true);
+  assert.ok(Math.abs(range() - 4000) < 1, `range ${range()}`);
+  press('-');
+  assert.ok(Math.abs(range() - 8000) < 1, `range ${range()}`);
+  // Arrows stay with focus navigation; browser zoom and typing are untouched.
+  assert.equal(press('ArrowUp').defaultPrevented, false);
+  assert.equal(press('-', { ctrlKey: true }).defaultPrevented, false);
+  const input = { matches: (selector) => selector.includes('input') };
+  assert.equal(press('+', { target: input }).defaultPrevented, false);
+  assert.ok(Math.abs(range() - 8000) < 1, `range ${range()}`);
+  assert.equal(navigations.length, 5);
+
+  controls.destroy();
+  zoomInButton.click();
+  press('+');
+  assert.equal(navigations.length, 5);
 });
