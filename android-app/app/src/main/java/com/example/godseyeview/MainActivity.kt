@@ -3,6 +3,9 @@ package com.example.godseyeview
 import android.annotation.SuppressLint
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
+import android.view.ViewGroup
+import android.webkit.ConsoleMessage
 import android.webkit.CookieManager
 import android.webkit.PermissionRequest
 import android.webkit.WebChromeClient
@@ -10,13 +13,15 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.viewinterop.AndroidView
 import com.example.godseyeview.theme.GodsEyeViewTheme
 
@@ -25,7 +30,11 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+        // Light status and navigation icons over the black bars.
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT),
+            navigationBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT),
+        )
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 val view = webView
@@ -34,8 +43,10 @@ class MainActivity : ComponentActivity() {
         })
         setContent {
             GodsEyeViewTheme {
-                Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    GodsEyeWebView(startUrl(), onCreated = { webView = it })
+                // The page draws its own dark chrome, so keep it clear of the
+                // status bar, navigation bar and camera cutout.
+                Surface(modifier = Modifier.fillMaxSize(), color = Color.Black) {
+                    GodsEyeWebView(startUrl(), Modifier.safeDrawingPadding(), onCreated = { webView = it })
                 }
             }
         }
@@ -59,11 +70,18 @@ private fun startUrl(): String {
 
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
-fun GodsEyeWebView(url: String, onCreated: (WebView) -> Unit) {
+fun GodsEyeWebView(url: String, modifier: Modifier = Modifier, onCreated: (WebView) -> Unit) {
     AndroidView(
-        modifier = Modifier.fillMaxSize(),
+        modifier = modifier.fillMaxSize(),
         factory = { context ->
             WebView(context).apply {
+                // Without explicit MATCH_PARENT the WebView is WRAP_CONTENT,
+                // which makes CSS viewport units (100vh, 100dvh) resolve to 0
+                // and leaves the globe's canvas 0 px tall.
+                layoutParams = ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                )
                 settings.javaScriptEnabled = true
                 settings.domStorageEnabled = true
                 settings.mediaPlaybackRequiresUserGesture = false
@@ -73,6 +91,13 @@ fun GodsEyeWebView(url: String, onCreated: (WebView) -> Unit) {
                 webChromeClient = object : WebChromeClient() {
                     override fun onPermissionRequest(request: PermissionRequest) {
                         request.grant(request.resources)
+                    }
+
+                    // Page console output shows in Logcat under the GEV tag.
+                    override fun onConsoleMessage(message: ConsoleMessage): Boolean {
+                        if (!BuildConfig.DEBUG) return false
+                        Log.i("GEV", "${message.messageLevel()} ${message.message()} (${message.sourceId()}:${message.lineNumber()})")
+                        return true
                     }
                 }
 
