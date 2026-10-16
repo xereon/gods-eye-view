@@ -699,12 +699,11 @@ test('a zoom step halves or doubles the range within the limits', () => {
   assert.equal(zoomedRange(MAX_ZOOM_RANGE_M, 'out'), MAX_ZOOM_RANGE_M);
 });
 
-test('zoom buttons and remote keys move a real camera along its view, keeping heading and pitch', () => {
+test('zoom buttons move a real camera along its view, keeping heading and pitch', () => {
   const { viewer } = createRealViewer(AUSTIN_GROUND);
   orbit(viewer, AUSTIN_GROUND, 120, OBLIQUE_PITCH, 4000);
   const zoomInButton = new FakeButton();
   const zoomOutButton = new FakeButton();
-  const documentRef = new EventTarget();
   const navigations = [];
   const controls = bindCameraOrientationControls({
     viewer,
@@ -713,16 +712,8 @@ test('zoom buttons and remote keys move a real camera along its view, keeping he
       navigations.push(noun);
       return navigate();
     },
-    documentRef,
   });
   const range = () => readCameraTargetFrame(viewer).range;
-  const press = (key, init = {}) => {
-    const event = new Event('keydown', { cancelable: true });
-    for (const [name, value] of Object.entries({ key, ...init }))
-      Object.defineProperty(event, name, { value });
-    documentRef.dispatchEvent(event);
-    return event;
-  };
 
   zoomInButton.click();
   assert.ok(Math.abs(range() - 2000) < 1, `range ${range()}`);
@@ -732,21 +723,9 @@ test('zoom buttons and remote keys move a real camera along its view, keeping he
   const frame = readCameraTargetFrame(viewer);
   assert.ok(Math.abs(Cesium.Math.toDegrees(frame.heading) - 120) < 0.01);
   assert.ok(Math.abs(frame.pitch - OBLIQUE_PITCH) < 1e-6);
-
-  assert.equal(press('MediaFastForward').defaultPrevented, true);
-  assert.ok(Math.abs(range() - 4000) < 1, `range ${range()}`);
-  press('-');
-  assert.ok(Math.abs(range() - 8000) < 1, `range ${range()}`);
-  // Arrows stay with focus navigation; browser zoom and typing are untouched.
-  assert.equal(press('ArrowUp').defaultPrevented, false);
-  assert.equal(press('-', { ctrlKey: true }).defaultPrevented, false);
-  const input = { matches: (selector) => selector.includes('input') };
-  assert.equal(press('+', { target: input }).defaultPrevented, false);
-  assert.ok(Math.abs(range() - 8000) < 1, `range ${range()}`);
-  assert.equal(navigations.length, 5);
+  assert.deepEqual(navigations, ['camera', 'camera', 'camera']);
 
   controls.destroy();
   zoomInButton.click();
-  press('+');
-  assert.equal(navigations.length, 5);
+  assert.equal(navigations.length, 3);
 });

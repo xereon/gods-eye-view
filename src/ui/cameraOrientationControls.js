@@ -25,27 +25,6 @@ export function zoomedRange(range, direction) {
   return Cesium.Math.clamp(next, MIN_ZOOM_RANGE_M, MAX_ZOOM_RANGE_M);
 }
 
-/** Remote and keyboard keys that zoom: D-pad remotes have no wheel or pinch. */
-const ZOOM_KEYS = Object.freeze({
-  '+': 'in',
-  '=': 'in',
-  ChannelUp: 'in',
-  MediaFastForward: 'in',
-  ZoomIn: 'in',
-  '-': 'out',
-  _: 'out',
-  ChannelDown: 'out',
-  MediaRewind: 'out',
-  ZoomOut: 'out',
-});
-
-function isEditableTarget(target) {
-  return Boolean(
-    target?.isContentEditable ||
-    target?.matches?.('input, select, textarea, [contenteditable]'),
-  );
-}
-
 function normalizedHeading(heading) {
   const wrapped = Cesium.Math.zeroToTwoPi(
     Number.isFinite(heading) ? heading : 0,
@@ -283,7 +262,6 @@ export function bindCameraOrientationControls({
   elements,
   runNavigation,
   showToast,
-  documentRef = null,
 }) {
   const tiltButton = elements?.tiltButton;
   const northButton = elements?.northButton;
@@ -406,24 +384,6 @@ export function bindCameraOrientationControls({
   };
   listen(zoomInButton, () => zoom('in'));
   listen(zoomOutButton, () => zoom('out'));
-  if (documentRef?.addEventListener) {
-    const onKeyDown = (event) => {
-      const direction = ZOOM_KEYS[event.key];
-      if (
-        !direction ||
-        event.defaultPrevented ||
-        event.ctrlKey ||
-        event.metaKey ||
-        event.altKey ||
-        isEditableTarget(event.target)
-      )
-        return;
-      event.preventDefault();
-      zoom(direction);
-    };
-    documentRef.addEventListener('keydown', onKeyDown);
-    removers.push(() => documentRef.removeEventListener('keydown', onKeyDown));
-  }
 
   const subscribe = (event, handler) => {
     const remove = event?.addEventListener?.(handler);

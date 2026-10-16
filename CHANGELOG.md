@@ -1,10 +1,12 @@
 # Changelog
 
-- The globe can now zoom from a TV remote. Zoom out and zoom in buttons sit in
-  the top-centre actions where D-pad focus reaches them, and `+` / `-` (plus a
-  remote's channel or fast-forward / rewind keys) zoom too. Each step halves or
-  doubles the distance to the view centre and keeps the heading and tilt.
-  Phones narrower than 520 px keep pinch-to-zoom and hide the buttons.
+- Move and zoom the map with a TV remote. With no control focused, the D-pad
+  pans the globe; OK switches to zoom mode (Up/Down zoom, Left/Right rotate) and
+  back; holding OK moves focus to the on-screen controls, which now include zoom
+  out and zoom in buttons beside north-up. In the Android app, Back returns from
+  the controls to the globe and leaves zoom mode before it closes the app. `+`/`-`,
+  Page Up/Down, Channel Up/Down and fast-forward/rewind also zoom. Phones
+  narrower than 520 px keep pinch-to-zoom and hide the two buttons.
 
 - Leaving the Cyber HUD layout no longer leaves the map stuck in FLIR. Entering
   Cyber switches the map to thermal with Ironbow; choosing Tactical, Operator or
@@ -246,6 +248,7 @@
 Add feed provenance to analyst/view answers and HUD context while retaining existing response fields and runner ownership (Matt Van Horn, #347).
 
 Analyst records for loaded satellites, datacenters and dams, with explicit bounded count/rank coverage (Matt Van Horn, #351).
+
 - New Fire Perimeters layer (Events group): live NIFC WFIGS interagency
   wildfire incident perimeters as ground-clamped polygons with a
   containment-colored fire line, refreshed every 5 minutes from the public
