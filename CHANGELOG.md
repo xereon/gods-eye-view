@@ -1,5 +1,18 @@
 # Changelog
 
+- Android app: voice control and the radio's location lookup now ask Android
+  for microphone and location access instead of failing silently, and only the
+  God's Eye View server is granted them. Rotating the device no longer reloads
+  the globe, links to other sites open in the browser, the page pauses while the
+  app is in the background, and a "Can't reach God's Eye View" screen with Try
+  again replaces the WebView error page when the server is unreachable.
+
+- Ctrl, Cmd and Alt shortcuts are left to the browser: Ctrl+C copies instead of
+  toggling CCTV, and Ctrl+F or Ctrl+D no longer flip layers. The search button
+  has a name and reports whether the search box is open, loading progress is
+  announced to screen readers, and the HUD clock and AI summary pause while the
+  tab is hidden.
+
 - Move and zoom the map with a TV remote. With no control focused, the D-pad
   pans the globe; OK switches to zoom mode (Up/Down zoom, Left/Right rotate) and
   back; holding OK moves focus to the on-screen controls, which now include zoom

@@ -119,9 +119,11 @@ test('the supplied search target retains editing even without form markup', () =
   assert.deepEqual(f.calls, [['dismissSearch']]);
 });
 
-test('shortcut extraction does not change repeat or modifier policy', () => {
+test('shortcuts still fire on key repeat but leave modifier combinations to the browser', () => {
   const f = shortcuts();
   f.press('h', new Element(), { repeat: true, ctrlKey: true });
+  assert.deepEqual(f.calls, []);
+  f.press('h', new Element(), { repeat: true });
   assert.deepEqual(f.calls, [['toggleHud']]);
 });
 

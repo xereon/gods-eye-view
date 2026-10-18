@@ -28,6 +28,10 @@ export function bindApplicationShortcuts({
       event.target?.matches?.('select, input, textarea') ||
       event.target === searchInput;
     if (isFormControl && event.key !== 'Escape') return;
+    // Leave browser and system shortcuts alone: Ctrl+C copies, it does not
+    // toggle CCTV.
+    if (event.ctrlKey || event.metaKey || event.altKey) return;
+    if (event.target?.isContentEditable) return;
 
     if (STYLE_KEYS[event.key]) actions.setStyle(STYLE_KEYS[event.key]);
     if (event.key === 'Escape') actions.dismissSearch();

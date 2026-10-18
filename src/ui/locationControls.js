@@ -55,9 +55,9 @@ export class LocationControls {
         onPoi(cityId, index);
     });
     this.bind(elements.searchToggle, 'click', () => {
-      elements.search.classList.toggle('expanded');
-      if (elements.search.classList.contains('expanded'))
-        elements.search.focus();
+      const expanded = elements.search.classList.toggle('expanded');
+      elements.searchToggle.setAttribute('aria-expanded', String(expanded));
+      if (expanded) elements.search.focus();
     });
     this.bind(elements.search, 'keydown', (event) => {
       if (event.key === 'Enter') void onSearch(elements.search.value);

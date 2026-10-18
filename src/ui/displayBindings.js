@@ -68,6 +68,9 @@ export class DisplayBindings {
         dismissSearch: () => {
           if (this._locationSearch.classList.contains('expanded')) {
             this._locationSearch.classList.remove('expanded');
+            globalThis.document
+              ?.getElementById('search-toggle')
+              ?.setAttribute('aria-expanded', 'false');
             this._locationSearch.value = '';
             this._locationSearch.blur();
           }
