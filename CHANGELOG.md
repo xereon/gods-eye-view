@@ -1,5 +1,9 @@
 # Changelog
 
+- On Android the globe no longer turns black when zoomed out past about
+  3,600 km. Cesium switches to per-fragment ground atmosphere there, which
+  renders black on Android GPUs; Android now stays on the per-vertex path.
+
 - Move and zoom the map with a TV remote. With no control focused, the D-pad
   pans the globe; OK switches to zoom mode (Up/Down zoom, Left/Right rotate) and
   back; holding OK moves focus to the on-screen controls, which now include zoom
