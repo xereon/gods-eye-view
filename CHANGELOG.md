@@ -5,7 +5,8 @@
   renders black on Android GPUs; Android now stays on the per-vertex path.
 
 - Android app: voice control and the radio's location lookup now ask Android
-  for microphone and location access instead of failing silently, and only the
+  for microphone and location access instead of failing silently (and declare
+  MODIFY_AUDIO_SETTINGS, without which the WebView finds no microphone), and only the
   God's Eye View server is granted them. Rotating the device no longer reloads
   the globe, links to other sites open in the browser, the page pauses while the
   app is in the background, and a "Can't reach God's Eye View" screen with Try
