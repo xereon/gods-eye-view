@@ -1,5 +1,12 @@
 # Changelog
 
+- Layout fixes found in the Play Store screenshots: on TVs and other screens
+  between phone and desktop width, the globe action buttons no longer cover
+  "VIEW" in the title; on portrait phones the right-hand HUD readouts stack
+  under the left ones instead of printing over them, and the credit line wraps
+  instead of running off the right edge; and once you show or hide the HUD
+  yourself, switching styles keeps your choice.
+
 - The Cesium ion logo no longer sits in the credit line unless the map is
   actually loading data from Cesium ion, which requires it.
 

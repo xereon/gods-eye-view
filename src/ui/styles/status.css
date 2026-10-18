@@ -415,3 +415,24 @@
   visibility: visible;
   transform: translateX(-50%) translateY(0);
 }
+
+/* Between phone and desktop widths (TVs report 960 px) the centred actions
+   reach the title, so they sit on the right, left of the active-style label. */
+@media (min-width: 721px) and (max-width: 1199px) {
+  #top-center-actions {
+    right: 168px;
+    left: auto;
+    transform: none;
+  }
+}
+
+/* Too narrow for both: the active style is already on the HUD and the styles tray. */
+@media (min-width: 721px) and (max-width: 999px) {
+  #style-indicator {
+    display: none;
+  }
+
+  #top-center-actions {
+    right: 36px;
+  }
+}

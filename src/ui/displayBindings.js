@@ -12,10 +12,11 @@ export class DisplayBindings {
     operations,
     readState,
     claimDetection,
+    claimHud,
   }) {
     Object.assign(
       this,
-      { viewer, services, readState, claimDetection },
+      { viewer, services, readState, claimDetection, claimHud },
       elements,
       operations,
     );
@@ -77,6 +78,7 @@ export class DisplayBindings {
         },
         toggleHud: () => {
           this.shareLinkManager?.claimRestoreLane?.('visual');
+          this.claimHud?.();
           this.hud.toggle();
           this._updateHudButtonState();
           this._syncShareState();
@@ -196,6 +198,7 @@ export class DisplayBindings {
         },
         toggleHud: () => {
           this.shareLinkManager?.claimRestoreLane?.('visual');
+          this.claimHud?.();
           this.hud.toggle();
           this._updateHudButtonState();
           this._syncShareState();

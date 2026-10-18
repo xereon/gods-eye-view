@@ -562,6 +562,9 @@ export class StyleManager extends ShellFacade {
       claimDetection: () => {
         this._visualSettings._detectionUserOverridden = true;
       },
+      claimHud: () => {
+        this._visualSettings._hudUserOverridden = true;
+      },
     });
     this._initUI();
     this._initMapStackControl();
@@ -1084,6 +1087,8 @@ export class StyleManager extends ShellFacade {
       return { ok: false, error: `Unknown HUD visibility mode: ${mode}` };
     }
     this.shareLinkManager?.claimRestoreLane?.('visual');
+    // 'auto' hands the HUD back to the styles; 'on'/'off' is the operator's call.
+    this._visualSettings._hudUserOverridden = normalized !== 'auto';
     this.hud.setMode(normalized);
     this._updateHudButtonState();
     this._syncShareState();

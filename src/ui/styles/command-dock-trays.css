@@ -509,3 +509,61 @@ body:not(.ui-clean-view):not(.recording-mode):has(
     bottom: calc(50vh + 8px);
   }
 }
+
+/* Portrait phones are too narrow for HUD blocks side by side: the right-hand
+   blocks stack on the left, the top one under the classification block and
+   the bottom one above the coordinates. */
+@media (max-width: 720px) {
+  #intel-hud .hud-top-left {
+    max-width: calc(100vw - 32px);
+  }
+
+  /* Lines up with the left blocks' text, which sits after their bracket. */
+  #intel-hud .hud-top-right,
+  #intel-hud .hud-bottom-right {
+    right: auto;
+    left: 36px;
+  }
+
+  /* The markup right-aligns these blocks inline; on the left they read left. */
+  #intel-hud .hud-top-right .hud-content,
+  #intel-hud .hud-bottom-right .hud-content {
+    text-align: left !important;
+  }
+
+  #intel-hud .hud-top-right .hud-bracket,
+  #intel-hud .hud-bottom-right .hud-bracket {
+    display: none;
+  }
+
+  #intel-hud .hud-top-right {
+    top: calc(120px + 128px);
+  }
+
+  #intel-hud[data-variant='tactical'] .hud-top-right,
+  #intel-hud[data-variant='operator'] .hud-top-right {
+    top: calc(max(14vh, 136px) + 128px);
+  }
+
+  #intel-hud .hud-bottom-right {
+    bottom: calc(180px + 56px);
+  }
+
+  #intel-hud[data-variant='tactical'] .hud-bottom-right,
+  #intel-hud[data-variant='operator'] .hud-bottom-right {
+    bottom: calc(2vh + 6.5rem + 56px);
+  }
+
+  /* A one-line credit runs off the right edge; wrap between whole entries. */
+  #cesium-credits {
+    left: 16px;
+    max-width: calc(100vw - 32px);
+    white-space: normal;
+  }
+
+  #cesium-credits .cesium-credit-wrapper,
+  #cesium-credits .cesium-credit-expand-link {
+    display: inline-block;
+    white-space: nowrap;
+  }
+}
