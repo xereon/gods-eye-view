@@ -10,7 +10,9 @@
  * @param {() => void} options.onEscape Caller-owned dismissal action.
  * @param {() => HTMLElement} [options.fallbackFocus] Return target if the opener is gone.
  * @param {boolean} [options.arrowKeys] Let Up/Down step through the controls,
- *   for TV remotes whose D-pad cannot leave a text field on its own.
+ *   for TV remotes whose D-pad cannot leave a text field on its own. A text
+ *   field reached this way is read-only until OK/Enter, because Android TV
+ *   raises its keyboard on focus and the keyboard then swallows the D-pad.
  * @returns {{activate: Function, deactivate: Function, destroy: Function}}
  */
 export function createSurfaceKeyboard({
@@ -34,6 +36,25 @@ export function createSurfaceKeyboard({
       (node) =>
         !node.hasAttribute('disabled') && node.getClientRects().length > 0,
     );
+
+  const passedThrough = new Set();
+  const passThrough = (node) => {
+    const editable =
+      node.matches?.('input:not([type="button"]):not([type="checkbox"])') &&
+      !node.readOnly;
+    if (editable) {
+      passedThrough.add(node);
+      node.readOnly = true;
+      node.addEventListener(
+        'blur',
+        () => {
+          if (passedThrough.delete(node)) node.readOnly = false;
+        },
+        { once: true },
+      );
+    }
+    node.focus();
+  };
 
   const onKeyDown = (event) => {
     // Visibility/arbitration belongs to the screen, including overlays that
@@ -61,7 +82,22 @@ export function createSurfaceKeyboard({
           ? order[0]
           : order[index + (event.key === 'ArrowDown' ? 1 : -1)];
       event.preventDefault();
-      next?.focus();
+      if (next) passThrough(next);
+      return;
+    }
+    if (
+      arrowKeys &&
+      event.key === 'Enter' &&
+      passedThrough.has(documentRef.activeElement)
+    ) {
+      // OK on a field the D-pad landed on: make it editable and focus it
+      // again so the on-screen keyboard comes up for typing.
+      const field = documentRef.activeElement;
+      event.preventDefault();
+      passedThrough.delete(field);
+      field.readOnly = false;
+      field.blur?.();
+      field.focus();
       return;
     }
     if (event.key !== 'Tab') return;

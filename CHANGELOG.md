@@ -4,6 +4,8 @@
   longer drops focus straight into the first key field (which popped the
   on-screen keyboard); a mouse or trackpad still starts there. Up and Down now
   step between the fields and buttons, so the D-pad can leave a text field.
+  A field reached with the D-pad stays read-only until OK, because Android TV
+  raises its keyboard on focus and the keyboard then swallows the arrows.
 
 - On Android the globe no longer turns black when zoomed out past about
   3,600 km. Cesium switches to per-fragment ground atmosphere there, which

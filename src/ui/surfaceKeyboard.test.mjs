@@ -247,3 +247,41 @@ test('arrow keys step through controls only when enabled', () => {
     'Shift+Down is left alone',
   );
 });
+
+test('a field reached with the D-pad stays read-only until OK', () => {
+  const f = fixture({ arrowKeys: true });
+  const blurListeners = [];
+  const field = Object.assign(f.node(), {
+    readOnly: false,
+    matches: (selector) => selector.startsWith('input'),
+    addEventListener: (type, handler) => {
+      if (type === 'blur') blurListeners.push(handler);
+    },
+    blur() {
+      for (const handler of blurListeners.splice(0)) handler();
+    },
+  });
+  f.setControls([f.first, field, f.last]);
+  f.controller.activate();
+  f.first.focus();
+
+  f.send('ArrowDown');
+  assert.equal(f.documentRef.activeElement, field);
+  assert.equal(field.readOnly, true, 'no keyboard while passing through');
+
+  assert.equal(f.send('Enter').defaultPrevented, true);
+  assert.equal(field.readOnly, false, 'OK makes it editable');
+  assert.equal(f.documentRef.activeElement, field);
+  assert.equal(
+    f.send('Enter').defaultPrevented,
+    false,
+    'Enter then types normally',
+  );
+
+  f.send('ArrowUp');
+  assert.equal(f.documentRef.activeElement, f.first);
+  f.send('ArrowDown');
+  assert.equal(field.readOnly, true);
+  field.blur();
+  assert.equal(field.readOnly, false, 'leaving restores the field');
+});
