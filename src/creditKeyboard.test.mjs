@@ -186,3 +186,23 @@ test('credit keyboard setup is idempotent and safely declines incomplete markup'
   assert.equal(f.overlay.listenerCount('click'), 1);
   assert.equal(configureCreditKeyboardAccess({ querySelector: () => null }), false);
 });
+
+test('the Display panel Credits button opens attribution and gets focus back', () => {
+  const f = fixture();
+  const panelButton = fakeElement();
+  const baseQuery = f.root.querySelector;
+  f.root.querySelector = (selector) =>
+    selector === '#data-attribution-btn' ? panelButton : baseQuery(selector);
+  let opened = 0;
+  f.expand.onclick = () => { opened++; };
+  configureCreditKeyboardAccess(f.root);
+  assert.equal(panelButton.getAttribute('aria-haspopup'), 'dialog');
+  panelButton.click();
+  assert.equal(opened, 1);
+  assert.equal(panelButton.getAttribute('aria-expanded'), 'true');
+  assert.equal(f.close.focused, true);
+  f.close.click();
+  assert.equal(panelButton.getAttribute('aria-expanded'), 'false');
+  assert.equal(panelButton.focused, true);
+  assert.equal(f.expand.focused, false);
+});

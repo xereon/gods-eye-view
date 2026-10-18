@@ -1,5 +1,10 @@
 # Changelog
 
+- The map credit line is smaller and fainter, and the "Data attribution" link
+  has moved off the map into the Display panel as Credits. The on-map credits
+  Esri and Google require ("Powered by Esri", the Google logo) stay visible.
+  The link still shows on the map while the ALPR layer is on.
+
 - Layout fixes found in the Play Store screenshots: on TVs and other screens
   between phone and desktop width, the globe action buttons no longer cover
   "VIEW" in the title; on portrait phones the right-hand HUD readouts stack
