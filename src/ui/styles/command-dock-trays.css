@@ -566,4 +566,12 @@ body:not(.ui-clean-view):not(.recording-mode):has(
     display: inline-block;
     white-space: nowrap;
   }
+
+  /* #cesium-credits itself is zero-width, so without this every entry wraps
+     onto its own line even when they fit; size the line to its content. */
+  #cesium-credits .cesium-widget-credits {
+    display: block;
+    width: max-content;
+    max-width: calc(100vw - 32px);
+  }
 }

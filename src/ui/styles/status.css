@@ -436,3 +436,17 @@
     right: 36px;
   }
 }
+
+/* Just above the phone breakpoint the right-aligned row still reaches the
+   full-size title; use the smaller title there. */
+@media (min-width: 721px) and (max-width: 759px) {
+  #title-bar h1 {
+    gap: 8px;
+    font-size: 18px;
+    letter-spacing: 4px;
+  }
+
+  #title-bar .title-logo {
+    width: 40px;
+  }
+}
