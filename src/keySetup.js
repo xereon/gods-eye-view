@@ -251,6 +251,7 @@ export async function initKeySetup({
     documentRef,
     isActive: () => open && visible(),
     onEscape: () => close(),
+    arrowKeys: true,
   });
 
   const openDialog = () => {
@@ -261,7 +262,13 @@ export async function initKeySetup({
     globalThis.requestAnimationFrame?.(() => {
       if (!open) return;
       root.classList.add('visible');
-      root.querySelector('input')?.focus?.({ preventScroll: true });
+      // Focusing a field on a phone or TV opens the on-screen keyboard over
+      // the dialog, so only a mouse or trackpad user starts in the first key
+      // field. Everyone else starts on the dialog and moves down into it.
+      const finePointer =
+        documentRef.defaultView?.matchMedia?.('(pointer: fine)')?.matches;
+      const start = finePointer ? root.querySelector('input') : root;
+      start?.focus?.({ preventScroll: true });
     });
   };
 
