@@ -187,3 +187,36 @@ export function applyModelAtmosphereWorkaround(scene, options = {}) {
   scene.fog.renderable = false;
   return true;
 }
+
+/**
+ * Farther than any camera position, and still finite as a float32 shader
+ * uniform (Number.MAX_VALUE would become Infinity there).
+ */
+export const GROUND_ATMOSPHERE_PER_VERTEX_DISTANCE = 1e12;
+
+/** True when the user agent is Android, including the Android app's WebView. */
+export function isAndroidPlatform(navigatorLike = globalThis.navigator) {
+  return /\bAndroid\b/.test(String(navigatorLike?.userAgent || ''));
+}
+
+/**
+ * Keep Android on Cesium's per-vertex ground atmosphere.
+ *
+ * Cesium switches the globe to per-fragment ground atmosphere once the camera
+ * is farther from Earth's centre than `globe.nightFadeOutDistance` (about
+ * 3,600 km altitude). On Android GPUs that path renders the whole globe
+ * black, so the Earth disappears when zoomed out and returns when zoomed in.
+ * With lighting off, the distance only selects that path, so pushing it out
+ * of reach changes nothing else.
+ *
+ * Returns true when the workaround was applied.
+ */
+export function applyGroundAtmosphereWorkaround(
+  globe,
+  navigatorLike = globalThis.navigator,
+) {
+  if (!globe || !isAndroidPlatform(navigatorLike)) return false;
+  globe.nightFadeOutDistance = GROUND_ATMOSPHERE_PER_VERTEX_DISTANCE;
+  globe.nightFadeInDistance = 2 * GROUND_ATMOSPHERE_PER_VERTEX_DISTANCE;
+  return true;
+}

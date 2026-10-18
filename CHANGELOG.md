@@ -1,5 +1,9 @@
 # Changelog
 
+- On Android the globe no longer turns black when zoomed out past about
+  3,600 km. Cesium switches to per-fragment ground atmosphere there, which
+  renders black on Android GPUs; Android now stays on the per-vertex path.
+
 - Android app: voice control and the radio's location lookup now ask Android
   for microphone and location access instead of failing silently, and only the
   God's Eye View server is granted them. Rotating the device no longer reloads
