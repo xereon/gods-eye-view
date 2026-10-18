@@ -12,10 +12,11 @@ export class DisplayBindings {
     operations,
     readState,
     claimDetection,
+    claimHud,
   }) {
     Object.assign(
       this,
-      { viewer, services, readState, claimDetection },
+      { viewer, services, readState, claimDetection, claimHud },
       elements,
       operations,
     );
@@ -68,12 +69,16 @@ export class DisplayBindings {
         dismissSearch: () => {
           if (this._locationSearch.classList.contains('expanded')) {
             this._locationSearch.classList.remove('expanded');
+            globalThis.document
+              ?.getElementById('search-toggle')
+              ?.setAttribute('aria-expanded', 'false');
             this._locationSearch.value = '';
             this._locationSearch.blur();
           }
         },
         toggleHud: () => {
           this.shareLinkManager?.claimRestoreLane?.('visual');
+          this.claimHud?.();
           this.hud.toggle();
           this._updateHudButtonState();
           this._syncShareState();
@@ -193,6 +198,7 @@ export class DisplayBindings {
         },
         toggleHud: () => {
           this.shareLinkManager?.claimRestoreLane?.('visual');
+          this.claimHud?.();
           this.hud.toggle();
           this._updateHudButtonState();
           this._syncShareState();

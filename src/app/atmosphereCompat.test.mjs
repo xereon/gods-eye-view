@@ -5,6 +5,8 @@ import {
   probeOutParamVaryingLinkFailure,
   shouldDisableModelAtmosphere,
   applyModelAtmosphereWorkaround,
+  applyGroundAtmosphereWorkaround,
+  GROUND_ATMOSPHERE_PER_VERTEX_DISTANCE,
 } from './atmosphereCompat.js';
 
 const IPAD_OS12 = {
@@ -218,4 +220,31 @@ test('releases the throwaway probe context after probing', () => {
     createProbeContext: () => gl,
   });
   assert.equal(lost, 1, 'probe context must not linger until GC');
+});
+
+test('Android keeps the globe on per-vertex ground atmosphere', () => {
+  const globe = { nightFadeOutDistance: 1e7, nightFadeInDistance: 5e7 };
+  const android = {
+    userAgent:
+      'Mozilla/5.0 (Linux; Android 14; Pixel 8; wv) AppleWebKit/537.36 Chrome/140.0 Mobile Safari/537.36',
+  };
+  assert.equal(applyGroundAtmosphereWorkaround(globe, android), true);
+  assert.equal(
+    globe.nightFadeOutDistance,
+    GROUND_ATMOSPHERE_PER_VERTEX_DISTANCE,
+  );
+  assert.equal(
+    globe.nightFadeInDistance,
+    2 * GROUND_ATMOSPHERE_PER_VERTEX_DISTANCE,
+  );
+});
+
+test('desktop keeps Cesium ground atmosphere defaults', () => {
+  const globe = { nightFadeOutDistance: 1e7, nightFadeInDistance: 5e7 };
+  const desktop = {
+    userAgent:
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/140.0 Safari/537.36',
+  };
+  assert.equal(applyGroundAtmosphereWorkaround(globe, desktop), false);
+  assert.equal(globe.nightFadeOutDistance, 1e7);
 });

@@ -258,12 +258,14 @@ export class IntelHUD {
   _startTimers() {
     // Timestamp — every second
     this._timestampInterval = setInterval(() => {
+      if (document.hidden) return;
       const el = document.getElementById('hud-timestamp');
       if (el) el.textContent = this._formatUTC();
     }, 1000);
 
     // REC blink — every 800ms
     this._recBlinkInterval = setInterval(() => {
+      if (document.hidden) return;
       this._recBlinkState = !this._recBlinkState;
       const dot = document.getElementById('hud-rec-dot');
       if (dot)
@@ -276,9 +278,10 @@ export class IntelHUD {
       this._updateCameraData();
     }, 250);
 
-    // Semantic summary refresh cadence
+    // Semantic summary refresh cadence. A hidden tab skips the summary
+    // request; the next tick after it is shown again catches up.
     this._summaryInterval = setInterval(() => {
-      if (!this._visible) return;
+      if (!this._visible || document.hidden) return;
       void this._updateSummary(true);
     }, HUD_SUMMARY_INTERVAL_MS);
   }

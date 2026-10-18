@@ -468,7 +468,9 @@ test('the inputs behind the measured constants are unchanged', () => {
   const creditBase = RULES.find((rule) => rule.parts.length === 1 && rule.parts[0] === '#cesium-credits');
   assert.ok(creditBase, '#cesium-credits base rule is missing');
   const declOf = (rule, prop) => rule.decls.find((decl) => decl.prop === prop)?.value;
-  assert.equal(declOf(creditBase, 'font-size'), '10px', 'credit font-size drives its measured 28px height');
+  // Measured at 10px; the credit was shrunk to 8px afterwards, which can only
+  // lower its height, so 28px stays a safe upper bound.
+  assert.equal(declOf(creditBase, 'font-size'), '8px', 'credit font-size drives its measured 28px height');
   assert.equal(declOf(creditBase, 'white-space'), 'nowrap', 'a wrapping credit is taller than the measured 28px');
   for (const prop of ['height', 'min-height', 'max-height', 'line-height', 'padding']) {
     assert.equal(declOf(creditBase, prop), undefined, `#cesium-credits gained ${prop}; re-measure CREDIT_HEIGHT_PX`);
@@ -605,7 +607,11 @@ test('the tray only spans the credit corner at the widths the model covers', () 
 });
 
 test('the credit line is never suppressed to make room', () => {
-  const creditBlocks = [...css.matchAll(/#cesium-credits[^{]*\{([^}]*)\}/g)].map((m) => m[1]);
+  // The one exception is the on-map "Data attribution" link, whose lightbox
+  // opens from Credits in the Display panel instead (owner decision 2026-10-18).
+  const creditBlocks = [...css.matchAll(/(#cesium-credits[^{]*)\{([^}]*)\}/g)]
+    .filter((m) => m[1].trim() !== '#cesium-credits .cesium-credit-expand-link')
+    .map((m) => m[2]);
   assert.ok(creditBlocks.length > 0);
   for (const block of creditBlocks) {
     assert.doesNotMatch(block, /display\s*:\s*none/, 'the credit must never be display:none');

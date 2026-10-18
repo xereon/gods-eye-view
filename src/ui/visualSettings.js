@@ -202,6 +202,9 @@ export class VisualSettings {
     this.activeStyle = 'normal';
     document.documentElement.dataset.gevStyle = this.activeStyle;
     this._detectionUserOverridden = false;
+    // Set once the operator shows or hides the HUD by hand, so switching
+    // styles no longer overrides their choice.
+    this._hudUserOverridden = false;
     this._cockpitVisionMode = 'optical';
     this._cockpitVisionRestore = null;
     this._cyberVisualRestore = null;
@@ -770,7 +773,7 @@ export class VisualSettings {
     if (preset.hudVariant && this.hud.getVariant() !== 'cyber') {
       this._setHudVariant(preset.hudVariant);
     }
-    if (typeof preset.hudVisible === 'boolean') {
+    if (typeof preset.hudVisible === 'boolean' && !this._hudUserOverridden) {
       this.hud.setMode(preset.hudVisible ? 'on' : 'off');
       this._updateHudButtonState();
     }

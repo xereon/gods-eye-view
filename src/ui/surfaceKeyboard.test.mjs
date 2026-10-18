@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createSurfaceKeyboard } from './surfaceKeyboard.js';
 
-function fixture() {
+function fixture(options = {}) {
   const listeners = new Set();
   const documentRef = {
     activeElement: null,
@@ -54,6 +54,7 @@ function fixture() {
     isActive: () => visible,
     onEscape: () => onEscape(),
     fallbackFocus: () => fallback,
+    ...options,
   });
   opener.focus();
   const event = (key, extra = {}) => ({
@@ -218,4 +219,69 @@ test('destroy is permanent, releases its listener and never restores focus', () 
   const e = f.event('Tab');
   handler(e);
   assert.equal(e.defaultPrevented, false);
+});
+
+test('arrow keys step through controls only when enabled', () => {
+  const plain = fixture();
+  plain.controller.activate();
+  plain.first.focus();
+  assert.equal(plain.send('ArrowDown').defaultPrevented, false);
+  assert.equal(plain.documentRef.activeElement, plain.first);
+
+  const f = fixture({ arrowKeys: true });
+  f.controller.activate();
+  // Starting outside the controls (the dialog itself), Down enters at the top.
+  assert.equal(f.send('ArrowDown').defaultPrevented, true);
+  assert.equal(f.documentRef.activeElement, f.first);
+  f.send('ArrowDown');
+  assert.equal(f.documentRef.activeElement, f.middle);
+  f.send('ArrowDown');
+  f.send('ArrowDown');
+  assert.equal(f.documentRef.activeElement, f.last, 'Down stops at the end');
+  f.send('ArrowUp');
+  assert.equal(f.documentRef.activeElement, f.middle);
+  f.send('ArrowDown', { shiftKey: true });
+  assert.equal(
+    f.documentRef.activeElement,
+    f.middle,
+    'Shift+Down is left alone',
+  );
+});
+
+test('a field reached with the D-pad stays read-only until OK', () => {
+  const f = fixture({ arrowKeys: true });
+  const blurListeners = [];
+  const field = Object.assign(f.node(), {
+    readOnly: false,
+    matches: (selector) => selector.startsWith('input'),
+    addEventListener: (type, handler) => {
+      if (type === 'blur') blurListeners.push(handler);
+    },
+    blur() {
+      for (const handler of blurListeners.splice(0)) handler();
+    },
+  });
+  f.setControls([f.first, field, f.last]);
+  f.controller.activate();
+  f.first.focus();
+
+  f.send('ArrowDown');
+  assert.equal(f.documentRef.activeElement, field);
+  assert.equal(field.readOnly, true, 'no keyboard while passing through');
+
+  assert.equal(f.send('Enter').defaultPrevented, true);
+  assert.equal(field.readOnly, false, 'OK makes it editable');
+  assert.equal(f.documentRef.activeElement, field);
+  assert.equal(
+    f.send('Enter').defaultPrevented,
+    false,
+    'Enter then types normally',
+  );
+
+  f.send('ArrowUp');
+  assert.equal(f.documentRef.activeElement, f.first);
+  f.send('ArrowDown');
+  assert.equal(field.readOnly, true);
+  field.blur();
+  assert.equal(field.readOnly, false, 'leaving restores the field');
 });

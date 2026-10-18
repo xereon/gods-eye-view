@@ -154,6 +154,9 @@ export class PanelChrome {
       beforeCollapse: () => {
         if (panelId !== 'location-bar' || !this._locationSearch) return;
         this._locationSearch.classList.remove('expanded');
+        globalThis.document
+          ?.getElementById('search-toggle')
+          ?.setAttribute('aria-expanded', 'false');
         this._locationSearch.value = '';
         this._locationSearch.blur();
       },
