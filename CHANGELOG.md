@@ -1,5 +1,8 @@
 # Changelog
 
+- The Cesium ion logo no longer sits in the credit line unless the map is
+  actually loading data from Cesium ion, which requires it.
+
 - The Power Up key setup works with a TV remote and on phones. Opening it no
   longer drops focus straight into the first key field (which popped the
   on-screen keyboard); a mouse or trackpad still starts there. Up and Down now

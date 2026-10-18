@@ -388,8 +388,8 @@ body:has(.data-toggle-row[data-layer-id='alpr-cameras'] .data-toggle-btn.active)
    Google Maps Platform ToS and Cesium's terms require the credit whenever the
    content is displayed — and these are exactly the modes used to record demos
    and launch videos, so hiding #cesium-credits here (as it was before) shipped
-   non-compliant footage. The full credit line — Cesium/Ion logo, "Google Maps",
-   and the "Data attribution" link that opens the per-layer license popover —
+   non-compliant footage. The full credit line — the Cesium ion logo when ion
+   serves data, "Google Maps", and the "Data attribution" link that opens the per-layer license popover —
    stays on screen; it's already styled small and unobtrusive above. The GEV
    chrome (panels/HUD) still fades via its own rules; only the required notice
    is exempt. (Note: Cesium re-applies inline styles on the credit elements each

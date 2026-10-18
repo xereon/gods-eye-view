@@ -109,6 +109,9 @@ export function installTrackpadPinchZoom(
 export function createApplicationViewer({ container, creditContainer }) {
   if (!container || !creditContainer)
     throw new TypeError('Viewer and credit containers are required');
+  // Drop the Cesium ion logo Cesium shows by default. Assets loaded through
+  // Cesium ion still bring their own ion logo credit, which their terms require.
+  Cesium.CreditDisplay.cesiumCredit = undefined;
   const viewer = new Cesium.Viewer(container, {
     timeline: false,
     animation: false,
