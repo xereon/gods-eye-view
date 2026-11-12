@@ -180,6 +180,7 @@
       "server/providers/radio.js",
       "server/providers/radio/catalog.js",
       "server/providers/radio/constants.js",
+      "server/providers/radio/regional.js",
       "server/providers/radio/stations.js",
       "server/providers/radio/transport.js",
       "src/data/radioCountry.js",

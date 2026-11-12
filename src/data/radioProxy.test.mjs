@@ -13,7 +13,7 @@ const UUID = '12345678-1234-4234-8234-123456789abc';
 const publicLookup = async () => [{ address: '93.184.216.34', family: 4 }];
 
 function createProxy(options = {}) {
-  return createRadioProxyMiddleware({ lookupImpl: publicLookup, ...options });
+  return createRadioProxyMiddleware({ lookupImpl: publicLookup, regionalCatalog: false, ...options });
 }
 
 function station(overrides = {}) {

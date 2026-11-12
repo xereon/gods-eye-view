@@ -72,6 +72,8 @@ export function radioProxyDestination(value) {
   } catch {
     return null;
   }
+  // SomaFM's public channel list is the one non-Radio-Browser directory read.
+  if (url.href === 'https://api.somafm.com/channels.json') return url;
   const origin = radioMirrorOrigin(url.hostname);
   if (
     !origin ||
