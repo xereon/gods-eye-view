@@ -1,5 +1,8 @@
 import * as Cesium from 'cesium';
-import { applyModelAtmosphereWorkaround } from './atmosphereCompat.js';
+import {
+  applyGroundAtmosphereWorkaround,
+  applyModelAtmosphereWorkaround,
+} from './atmosphereCompat.js';
 
 const PINCH_ZOOM_MULTIPLIER = 8;
 const MAX_PINCH_PIXEL_DELTA = 120;
@@ -130,6 +133,7 @@ export function createApplicationViewer({ container, creditContainer }) {
     // render loop. See app/atmosphereCompat.js.
     applyModelAtmosphereWorkaround(viewer.scene);
     viewer.scene.globe.show = false;
+    applyGroundAtmosphereWorkaround(viewer.scene.globe);
     // Wherever no imagery tile is drawn (loading, or the cracks the keyless
     // terrain mesh opens near the Antarctic at globe zoom) Cesium shows the
     // globe's base colour, pure blue by default. Use a deep-ocean tone instead.
