@@ -227,6 +227,13 @@ export const DATA_CREDITS = [
       '(public domain; audio delivered directly by each broadcaster)',
   },
   {
+    key: 'somafm',
+    html:
+      'Listener-supported radio channels: ' +
+      '<a href="https://somafm.com/" target="_blank" rel="noopener">SomaFM</a> ' +
+      '(audio delivered directly by SomaFM)',
+  },
+  {
     key: 'reearth-terrain',
     html:
       'Terrain (keyless globe stacks): ' +

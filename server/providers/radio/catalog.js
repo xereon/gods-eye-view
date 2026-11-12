@@ -26,6 +26,23 @@ import {
   RADIO_UUID_RE,
   RADIO_FALLBACK_MIRRORS,
 } from './constants.js';
+import {
+  RADIO_REGIONAL_AREAS,
+  RADIO_REGIONAL_LIMIT,
+  SOMAFM_CHANNELS_URL,
+  curatedRegionalStations,
+  regionalStationKey,
+  normalizeSomaFmChannels,
+  selectRegionalStations,
+} from './regional.js';
+function isSomaFmStream(value) {
+  try {
+    return /(?:^|\.)somafm\.com$/i.test(new URL(String(value)).hostname);
+  } catch {
+    return false;
+  }
+}
+
 export async function mapRadioConcurrent(values, concurrency, mapper) {
   const results = new Array(values.length);
   let cursor = 0;
@@ -48,6 +65,7 @@ export function createRadioProxyMiddleware({
   fetchImpl = null,
   lookupImpl = lookupDns,
   now = Date.now,
+  regionalCatalog = true,
 } = {}) {
   let mirrorCache = { origins: [...RADIO_FALLBACK_MIRRORS], cachedAt: 0 };
   let mirrorPromise = null;
@@ -60,6 +78,11 @@ export function createRadioProxyMiddleware({
   const catalogInstance = randomUUID();
   let servedStationIds = new Set();
   let refreshPromise = null;
+  // Regional coverage (local stations and SomaFM) is cached on its own and is
+  // best effort: it never decides whether the main catalog is healthy.
+  let regionalCache = { stations: [], cachedAt: 0 };
+  let regionalPromise = null;
+  let directoryOnlyIds = new Set();
 
   async function fetchJson(url, maxBytes = RADIO_RESPONSE_MAX_BYTES) {
     const destination = radioProxyDestination(url);
@@ -136,11 +159,11 @@ export function createRadioProxyMiddleware({
     return mirrorPromise;
   }
 
-  async function fetchPath(pathname) {
+  async function fetchPath(pathname, maxBytes = RADIO_RESPONSE_MAX_BYTES) {
     let lastError = null;
     for (const origin of await mirrors()) {
       try {
-        return await fetchJson(`${origin}${pathname}`);
+        return await fetchJson(`${origin}${pathname}`, maxBytes);
       } catch (error) {
         lastError = error;
       }
@@ -148,7 +171,82 @@ export function createRadioProxyMiddleware({
     throw lastError || new Error('No Radio Browser mirror is available');
   }
 
+  async function fetchRegionalStations() {
+    const countries = [
+      ...new Set(RADIO_REGIONAL_AREAS.map((area) => area.countryCode)),
+    ];
+    const [countryOutcomes, somaOutcome] = await Promise.all([
+      Promise.allSettled(
+        countries.map(async (countryCode) => {
+          const params = new URLSearchParams({
+            countrycode: countryCode,
+            hidebroken: 'true',
+            order: 'clickcount',
+            reverse: 'true',
+            limit: '6000',
+          });
+          const rows = await fetchPath(
+            `/json/stations/search?${params}`,
+            2 * RADIO_RESPONSE_MAX_BYTES,
+          );
+          if (!Array.isArray(rows))
+            throw new Error('Radio Browser regional payload was not an array');
+          return selectRegionalStations(rows);
+        }),
+      ),
+      fetchJson(SOMAFM_CHANNELS_URL, 512 * 1024)
+        .then(normalizeSomaFmChannels)
+        .then(
+          (stations) => ({ status: 'fulfilled', value: stations }),
+          () => ({ status: 'rejected', value: [] }),
+        ),
+    ]);
+    const fulfilled = [...countryOutcomes, somaOutcome].filter(
+      (outcome) => outcome.status === 'fulfilled',
+    );
+    // Curated stations need no fetch, so they stay even if every source fails.
+    const curated = curatedRegionalStations();
+    return {
+      stations: [...curated, ...fulfilled.flatMap((outcome) => outcome.value)],
+      directoryOnlyIds: new Set(
+        [...curated, ...somaOutcome.value].map((station) => station.id),
+      ),
+      complete: fulfilled.length === countryOutcomes.length + 1,
+    };
+  }
+
+  async function regionalStations() {
+    if (!regionalCatalog) return [];
+    if (now() - regionalCache.cachedAt < RADIO_DIRECTORY_CACHE_MS)
+      return regionalCache.stations;
+    if (!regionalPromise) {
+      regionalPromise = fetchRegionalStations()
+        .then((result) => {
+          // A partial refresh keeps the previous list if it was larger.
+          if (
+            result.complete ||
+            result.stations.length >= regionalCache.stations.length
+          ) {
+            regionalCache = { stations: result.stations, cachedAt: now() };
+            directoryOnlyIds = result.directoryOnlyIds;
+          } else {
+            regionalCache = { ...regionalCache, cachedAt: now() };
+          }
+          return regionalCache.stations;
+        })
+        .catch(() => {
+          regionalCache = { ...regionalCache, cachedAt: now() };
+          return regionalCache.stations;
+        })
+        .finally(() => {
+          regionalPromise = null;
+        });
+    }
+    return regionalPromise;
+  }
+
   async function refreshCatalog() {
+    const regionalRequest = regionalStations();
     const queries = [
       null,
       'news',
@@ -244,6 +342,32 @@ export function createRadioProxyMiddleware({
         (a, b) => b.clickCount - a.clickCount || a.name.localeCompare(b.name),
       )
       .forEach(take);
+    // Regional stations join after the global selection, beyond its cap, so
+    // local listening never displaces the worldwide catalog.
+    const regional = await regionalRequest;
+    // SomaFM's own channel list replaces community copies of its streams.
+    if (regional.some((station) => isSomaFmStream(station.streamUrl))) {
+      for (let index = selected.length - 1; index >= 0; index -= 1) {
+        if (isSomaFmStream(selected[index].streamUrl)) {
+          seen.delete(selected[index].id);
+          selected.splice(index, 1);
+        }
+      }
+    }
+    const selectedKeys = new Set(
+      selected.map((station) => regionalStationKey(station.name)),
+    );
+    let regionalAdded = 0;
+    for (const station of regional) {
+      if (regionalAdded >= RADIO_REGIONAL_LIMIT) break;
+      if (!station || seen.has(station.id)) continue;
+      const key = regionalStationKey(station.name);
+      if (key && selectedKeys.has(key)) continue;
+      selectedKeys.add(key);
+      seen.add(station.id);
+      selected.push(station);
+      regionalAdded += 1;
+    }
     const timestamp = now();
     const successfulQueries = outcomes.filter(
       (outcome) => outcome.succeeded,
@@ -254,13 +378,14 @@ export function createRadioProxyMiddleware({
     if (!broadQueryHealthy) healthReasons.push('broad-query-unhealthy');
     if (successfulQueries < RADIO_CATALOG_MIN_SUCCESSFUL_QUERIES)
       healthReasons.push('query-coverage-below-policy');
-    if (selected.length < RADIO_CATALOG_HEALTHY_MIN_STATIONS)
+    if (selected.length - regionalAdded < RADIO_CATALOG_HEALTHY_MIN_STATIONS)
       healthReasons.push('station-coverage-below-policy');
     const degraded = healthReasons.length > 0;
     const coverage = {
       successfulQueries,
       totalQueries: queries.length,
       stationCount: selected.length,
+      regionalStationCount: regionalAdded,
       healthyStationMinimum: RADIO_CATALOG_HEALTHY_MIN_STATIONS,
     };
     const nextCatalog = {
@@ -281,7 +406,8 @@ export function createRadioProxyMiddleware({
       error.radioCoverage = coverage;
       throw error;
     }
-    if (degraded && !selected.length) {
+    // Regional extras alone never stand in for an unreachable directory.
+    if (degraded && selected.length === regionalAdded) {
       const error = new Error(
         'Radio Browser catalog refresh returned no usable stations',
       );
@@ -381,6 +507,12 @@ export function createRadioProxyMiddleware({
       const id = clickMatch[1].toLowerCase();
       if (!RADIO_UUID_RE.test(id) || !servedStationIds.has(id)) {
         sendJson(res, 404, { error: 'Unknown radio station' });
+        return;
+      }
+      if (directoryOnlyIds.has(id)) {
+        // Stations from outside Radio Browser have nothing upstream to count.
+        res.writeHead(204, { 'Cache-Control': 'no-store' });
+        res.end();
         return;
       }
       res.writeHead(204, { 'Cache-Control': 'no-store' });

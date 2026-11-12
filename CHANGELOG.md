@@ -1,5 +1,15 @@
 # Changelog
 
+- Tune in to Sydney and the Central Coast. The radio layer now carries every
+  playable station Radio Browser lists for both areas (about 70, up from a
+  handful), on top of the worldwide favourites: ABC Radio Sydney, triple j,
+  Double J, ABC Classic, KIIS, Nova, Smooth, GOLD, 2GB, Triple M, 2Day FM, FBi,
+  2SER, Coast FM, Star 104.5, Rhema Central Coast and the community stations
+  across both regions. Stations without coordinates sit at the suburb in their
+  name, or near the city centre. Streams listed with plain http links play when
+  their host also serves them securely. All the SomaFM channels join too, from
+  SomaFM's own channel list, at their San Francisco home.
+
 - Move and zoom the map with a TV remote. With no control focused, the D-pad
   pans the globe; OK switches to zoom mode (Up/Down zoom, Left/Right rotate) and
   back; holding OK moves focus to the on-screen controls, which now include zoom
